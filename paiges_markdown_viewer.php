@@ -105,8 +105,10 @@ function paiges_markdown_viewer_render($attributes) {
 
         $cache_key = 'paiges_markdown_viewer_' . md5($url);
 
-        // Check cache unless no_cache is enabled
-        if (!$no_cache) {
+        // Delete existing cache and fetch fresh if no_cache is enabled
+        if ($no_cache) {
+            delete_transient($cache_key);
+        } else {
             $markdown_content = get_transient($cache_key);
         }
 
@@ -195,8 +197,10 @@ function paiges_markdown_viewer_shortcode($atts, $content = null) {
 
         $cache_key = 'paiges_markdown_viewer_' . md5($url);
 
-        // Check cache unless no_cache is enabled
-        if (!$no_cache) {
+        // Delete existing cache and fetch fresh if no_cache is enabled
+        if ($no_cache) {
+            delete_transient($cache_key);
+        } else {
             $markdown_content = get_transient($cache_key);
         }
 
