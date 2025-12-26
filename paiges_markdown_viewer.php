@@ -76,6 +76,10 @@ function paiges_markdown_viewer_register() {
             'maxHeight' => array(
                 'type' => 'number',
                 'default' => 0
+            ),
+            'noCache' => array(
+                'type' => 'boolean',
+                'default' => false
             )
         )
     ));
@@ -88,6 +92,7 @@ add_action('init', 'paiges_markdown_viewer_register');
 function paiges_markdown_viewer_render($attributes) {
     $markdown_content = '';
     $source_type = isset($attributes['sourceType']) ? $attributes['sourceType'] : 'direct';
+    $no_cache = isset($attributes['noCache']) ? $attributes['noCache'] : false;
 
     if ($source_type === 'url' && !empty($attributes['markdownUrl'])) {
         // Fetch markdown from URL
@@ -98,11 +103,14 @@ function paiges_markdown_viewer_render($attributes) {
             $url = 'https://raw.githubusercontent.com/' . $matches[1] . '/' . $matches[2] . '/' . $matches[3];
         }
 
-        // Use transient caching to avoid repeated requests
         $cache_key = 'paiges_markdown_viewer_' . md5($url);
-        $markdown_content = get_transient($cache_key);
 
-        if ($markdown_content === false) {
+        // Check cache unless no_cache is enabled
+        if (!$no_cache) {
+            $markdown_content = get_transient($cache_key);
+        }
+
+        if ($markdown_content === false || $markdown_content === '' || $no_cache) {
             $response = wp_remote_get($url, array(
                 'timeout' => 15,
                 'sslverify' => true
@@ -110,8 +118,10 @@ function paiges_markdown_viewer_render($attributes) {
 
             if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
                 $markdown_content = wp_remote_retrieve_body($response);
-                // Cache for 5 minutes
-                set_transient($cache_key, $markdown_content, 5 * MINUTE_IN_SECONDS);
+                // Cache for 5 minutes (unless no_cache is enabled)
+                if (!$no_cache) {
+                    set_transient($cache_key, $markdown_content, 5 * MINUTE_IN_SECONDS);
+                }
             } else {
                 $markdown_content = '**Error:** Unable to fetch markdown from the specified URL.';
             }
@@ -162,14 +172,17 @@ function paiges_markdown_viewer_render($attributes) {
  *   [paiges_markdown]Your **markdown** here[/paiges_markdown]
  *   [paiges_markdown url="https://example.com/file.md"]
  *   [paiges_markdown url="https://github.com/user/repo/blob/main/README.md" max_height="400"]
+ *   [paiges_markdown url="https://example.com/file.md" no_cache="true"]
  */
 function paiges_markdown_viewer_shortcode($atts, $content = null) {
     $atts = shortcode_atts(array(
         'url' => '',
         'max_height' => 0,
+        'no_cache' => false,
     ), $atts, 'paiges_markdown');
 
     $markdown_content = '';
+    $no_cache = filter_var($atts['no_cache'], FILTER_VALIDATE_BOOLEAN);
 
     if (!empty($atts['url'])) {
         // Fetch markdown from URL
@@ -180,11 +193,14 @@ function paiges_markdown_viewer_shortcode($atts, $content = null) {
             $url = 'https://raw.githubusercontent.com/' . $matches[1] . '/' . $matches[2] . '/' . $matches[3];
         }
 
-        // Use transient caching to avoid repeated requests
         $cache_key = 'paiges_markdown_viewer_' . md5($url);
-        $markdown_content = get_transient($cache_key);
 
-        if ($markdown_content === false) {
+        // Check cache unless no_cache is enabled
+        if (!$no_cache) {
+            $markdown_content = get_transient($cache_key);
+        }
+
+        if ($markdown_content === false || $markdown_content === '' || $no_cache) {
             $response = wp_remote_get($url, array(
                 'timeout' => 15,
                 'sslverify' => true
@@ -192,8 +208,10 @@ function paiges_markdown_viewer_shortcode($atts, $content = null) {
 
             if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
                 $markdown_content = wp_remote_retrieve_body($response);
-                // Cache for 5 minutes
-                set_transient($cache_key, $markdown_content, 5 * MINUTE_IN_SECONDS);
+                // Cache for 5 minutes (unless no_cache is enabled)
+                if (!$no_cache) {
+                    set_transient($cache_key, $markdown_content, 5 * MINUTE_IN_SECONDS);
+                }
             } else {
                 $markdown_content = '**Error:** Unable to fetch markdown from the specified URL.';
             }

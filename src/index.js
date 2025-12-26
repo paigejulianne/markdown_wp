@@ -88,11 +88,12 @@
             sourceType: { type: 'string', default: 'direct' },
             markdownContent: { type: 'string', default: '' },
             markdownUrl: { type: 'string', default: '' },
-            maxHeight: { type: 'number', default: 0 }
+            maxHeight: { type: 'number', default: 0 },
+            noCache: { type: 'boolean', default: false }
         },
         edit: function (props) {
             const { attributes, setAttributes } = props;
-            const { sourceType, markdownContent, markdownUrl, maxHeight } = attributes;
+            const { sourceType, markdownContent, markdownUrl, maxHeight, noCache } = attributes;
             const blockProps = useBlockProps({ className: 'markdown-viewer-editor' });
 
             const [previewContent, setPreviewContent] = useState('');
@@ -168,7 +169,15 @@
                             'p',
                             { style: { fontSize: '12px', color: '#757575', marginTop: '-8px' } },
                             'Current: ' + maxHeight + 'px'
-                        )
+                        ),
+                        sourceType === 'url' && el(ToggleControl, {
+                            label: 'Disable Caching',
+                            help: noCache ? 'Content is fetched fresh on every page load.' : 'Content is cached for 5 minutes.',
+                            checked: noCache,
+                            onChange: function (value) {
+                                setAttributes({ noCache: value });
+                            }
+                        })
                     )
                 ),
                 // Main editor content
