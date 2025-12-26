@@ -284,7 +284,7 @@ add_action('enqueue_block_assets', 'paiges_markdown_viewer_enqueue_styles');
  * Add View Details link to plugin row meta (author line)
  */
 function paiges_markdown_viewer_row_meta($links, $file) {
-    if ($file === 'paiges_markdown_viewer/paiges_markdown_viewer.php') {
+    if ($file === plugin_basename(__FILE__)) {
         $details_link = sprintf(
             '<a href="%s" class="thickbox open-plugin-details-modal" aria-label="%s" data-title="%s">%s</a>',
             esc_url(admin_url('plugin-install.php?tab=plugin-information&plugin=paiges_markdown_viewer&TB_iframe=true&width=600&height=550')),
